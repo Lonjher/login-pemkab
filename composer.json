@@ -1,0 +1,6 @@
+{
+    "require": {
+        "google/apiclient": "2.5.0",
+        "twbs/bootstrap-icons": "^1.11"
+    }
+}
