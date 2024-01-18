@@ -1,10 +1,23 @@
-<?php 
+<?php
 
-    define('DB_HOST', 'localhost');
-    define('DB_USER', 'root');
-    define('DB_PASS', '');
-    define('DB_NAME', 'db_login_pemkab');
-    define('DB_USER_TBL', 'users');
+    $db_host = 'localhost';
+    $db_name = 'db_login_pemkab';
+    $db_user = 'root';
+    $db_pass = '';
+
+    // Koneksi Database
+    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    // if($conn){
+    //     echo "Koneksi berhasil";
+    // }else {
+    //     die("Koneksi gagal".mysqli_connect_error());
+    // }
+
+    // define('DB_HOST', 'localhost');
+    // define('DB_USER', 'root');
+    // define('DB_PASS', '');
+    // define('DB_NAME', 'db_login_pemkab');
+    // define('DB_USER_TBL', 'users');
 
     // Konfigurasi Google
     define('GOOGLE_CLIENT_ID', '720596392903-3q2kr30eqg0j186sts1567bdf42h4q5h.apps.googleusercontent.com');
@@ -13,9 +26,6 @@
 
     // Memanggil Library
     require_once 'vendor/autoload.php';
-
-    // Koneksi Database
-    $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME) or die ("Gagal terhubung ke Database");
     
     // Inisiasi google client
     $client = new Google_Client();
@@ -25,33 +35,45 @@
     $client->setRedirectUri(GOOGLE_REDIRECT_URI);
     $client->addScope('email');
     $client->addScope('profile');
-
+    
     if(isset($_GET['code'])){
         $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
 
         // echo "<pre>";
         // print_r($token);
         // echo "</pre>";
+        
+        // Start session
+        // if(!session_id()){
+        //     session_start();
+        // }
 
         if(!isset($token["error"])){
-            $client->setAccessToken($token['access_token']);
+            // $client->setAccessToken($token['access_token']);
 
             // Inisisasi google service oauth2
-            $service = new Google_Service_Oauth2($client);
+            $service = new Google_Service_Oauth2($token['access_token']);
             $profile = $service->userinfo->get();
 
-            echo "<pre>";
-            print_r($profile);
-            echo "</pre>";
+            // echo "<pre>";
+            // print_r($profile);
+            // echo "</pre>";
 
             $user_name      = $profile['name'];
             $user_email     = $profile['email'];
             $g_id = $profile['id'];
             $picture = $profile['picture'];
 
-            $query_check = 'SELECT * FROM "'.DB_USER_TBL.'" WHERE oauth_id = "'.$g_id.'"';
+            $query_check = 'SELECT * FROM users WHERE oauth_id = "'.$g_id.'"';
             $run_query_check = mysqli_query($conn, $query_check);
             // $d = mysqli_fetch_array($run_query_check);
+
+            // echo "<pre>";
+            // print_r($user_name);
+            // print_r($user_email);
+            // print_r($g_id);
+            // print_r($picture);
+            // echo "</pre>";
 
             if($run_query_check){
                 echo "Data sudah tersedia";
@@ -59,7 +81,9 @@
 
                 $query_insert = 'INSERT INTO users (fullname, email, picture, ouauth_id, last_login) value ("'.$user_name.'", "'.$user_email.'", "'.$picture.'", "'.$g_id.'")';
                 $run_query_insert = mysqli_query($conn, $query_insert);
-                echo "Data berhasil disimpan!";
+                if($run_query_insert){
+                    echo "Data berhasil disimpan!";
+                }
             }
             echo "Login berhasil";
         }else {
@@ -67,11 +91,6 @@
         }
 
 
-    }
-    
-    // Start session
-    if(!session_id()){
-        session_start();
     }
     
 ?>
